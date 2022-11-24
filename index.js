@@ -27,10 +27,22 @@ const client = new MongoClient(uri, {
 
 async function run() {
 	const furnitureCollections = client.db('furnitureCollection').collection('furnitures')
+	const categoriesCollections = client.db('furnitureCollection').collection('categories')
 
 
 	app.get('/categories', async (req, res) => {
 		const query = {}
+		const result = await categoriesCollections.find(query).toArray()
+		res.send(result)
+	})
+	app.get("/furnitures", async (req, res) => {
+		const query = {}
+		const result = await furnitureCollections.find(query).toArray()
+		res.send(result)
+	})
+	app.get('/categoriesProducts/:id', async (req, res) => {
+		const { id } = req.params
+		const query = { categoryId: id }
 		const result = await furnitureCollections.find(query).toArray()
 		res.send(result)
 	})
