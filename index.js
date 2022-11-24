@@ -11,7 +11,7 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/", (req, res) => {
-	res.send("review server is running now ");
+	res.send("furniture server is running now ");
 });
 app.listen(port, () => {
 	console.log("port is running", port);
@@ -26,7 +26,14 @@ const client = new MongoClient(uri, {
 
 
 async function run() {
+	const furnitureCollections = client.db('furnitureCollection').collection('furnitures')
 
+
+	app.get('/categories', async (req, res) => {
+		const query = {}
+		const result = await furnitureCollections.find(query).toArray()
+		res.send(result)
+	})
 }
 run().catch(err => {
 	console.log(err);
