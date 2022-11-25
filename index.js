@@ -28,8 +28,19 @@ const client = new MongoClient(uri, {
 async function run() {
 	const furnitureCollections = client.db('furnitureCollection').collection('furnitures')
 	const categoriesCollections = client.db('furnitureCollection').collection('categories')
+	const usersCollections = client.db('furnitureCollection').collection('users')
+	const ordersCollections = client.db('furnitureCollection').collection('orders')
+
+	//   here is post method starts
+	app.post('/orders', async (req, res) => {
+		const order = req.body
+		const result = await ordersCollections.insertOne(order)
+		res.send(result)
+	})
+	//   here is post method ends
 
 
+	//   here is get method starts  
 	app.get('/categories', async (req, res) => {
 		const query = {}
 		const result = await categoriesCollections.find(query).toArray()
@@ -40,12 +51,21 @@ async function run() {
 		const result = await furnitureCollections.find(query).toArray()
 		res.send(result)
 	})
+
 	app.get('/categoriesProducts/:id', async (req, res) => {
 		const { id } = req.params
 		const query = { categoryId: id }
 		const result = await furnitureCollections.find(query).toArray()
 		res.send(result)
 	})
+	app.get('/furnitures/:id', async (req, res) => {
+		const { id } = req.params
+		const query = { _id: ObjectId(id) }
+		const result = await furnitureCollections.findOne(query)
+		res.send(result)
+	})
+	//   here is get method ends  
+
 }
 run().catch(err => {
 	console.log(err);
