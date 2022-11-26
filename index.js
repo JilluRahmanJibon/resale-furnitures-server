@@ -130,6 +130,27 @@ async function run() {
 		const result = await usersCollections.find({}).toArray()
 		res.send(result)
 	})
+	app.get('/users/sellers', verifyJWT, verifyAdmin, async (req, res) => {
+		const email = req.query.email;
+		const decodedEmail = req.decoded.email;
+		if (email !== decodedEmail) {
+			return res.status(403).send({ message: 'forbidden access' });
+		}
+		const sellers = await usersCollections.find({}).toArray()
+		const seller = sellers.filter(seller => seller.role === 'seller')
+		res.send(seller)
+	})
+	app.get('/users/buyers', verifyJWT, verifyAdmin, async (req, res) => {
+		const email = req.query.email;
+		const decodedEmail = req.decoded.email;
+		if (email !== decodedEmail) {
+			return res.status(403).send({ message: 'forbidden access' });
+		}
+		const sellers = await usersCollections.find({}).toArray()
+		const seller = sellers.filter(seller => seller.role === 'buyer')
+		res.send(seller)
+	})
+
 	app.get('/user/:email', verifyJWT, async (req, res) => {
 		const email = req.params.email
 		const query = { email: email }
