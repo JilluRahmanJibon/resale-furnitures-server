@@ -24,6 +24,20 @@ const client = new MongoClient(uri, {
 	serverApi: ServerApiVersion.v1,
 });
 
+function verifyJWT(req, res, next) {
+	const authHeader = req.headers.authorization
+	if (!authHeader) {
+		return res.status(401).send('unAuthorized')
+	}
+	const token = authHeader.split(' ')[1]
+	jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+		if (err) {
+			return res.status(403).send({ message: "forbidden access" })
+		}
+		req.decoded = decoded
+		next()
+	})
+}
 
 async function run() {
 	const furnitureCollections = client.db('furnitureCollection').collection('furnitures')
@@ -31,9 +45,42 @@ async function run() {
 	const usersCollections = client.db('furnitureCollection').collection('users')
 	const ordersCollections = client.db('furnitureCollection').collection('orders')
 
+
+	// verify admin 
+	const verifyAdmin = async (req, res, next) => {
+		const decodedEmail = req.decoded.email
+		const query = { email: decodedEmail }
+		const user = await usersCollections.findOne(query)
+
+		if (user?.role !== 'Admin') {
+			return res.status(403).send({ message: 'forbidden access' })
+		}
+		next()
+	}
+	// verify admin 
+	const verifySeller = async (req, res, next) => {
+		const decodedEmail = req.decoded.email
+		const query = { email: decodedEmail }
+		const user = await usersCollections.findOne(query)
+
+		if (user?.role !== 'seller') {
+			return res.status(403).send({ message: 'forbidden access' })
+		}
+		next()
+	}
+
 	//   here is post method starts
 	app.post('/orders', async (req, res) => {
 		const order = req.body
+		const query = {
+			productId: order.productId,
+			buyerEmail: order.buyerEmail,
+			productImage: order.productImage
+		}
+		const alreadyOrder = await ordersCollections.findOne(query)
+		if (alreadyOrder) {
+			return res.send({ message: 'You already buy this product' })
+		}
 		const result = await ordersCollections.insertOne(order)
 		res.send(result)
 	})
