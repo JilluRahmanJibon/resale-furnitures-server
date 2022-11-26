@@ -37,10 +37,37 @@ async function run() {
 		const result = await ordersCollections.insertOne(order)
 		res.send(result)
 	})
+	app.post('/furnitures', async (req, res) => {
+		const product = req.body
+		const result = await furnitureCollections.insertOne(product)
+		res.send(result)
+	})
+	app.post('/users', async (req, res) => {
+		const user = req.body
+		const query = { email: user.email }
+		const alreadyUser = await usersCollections.findOne(query)
+		if (alreadyUser) {
+			return res.send({ acknowledged: true })
+		}
+		const result = await usersCollections.insertOne(user)
+		res.send(result)
+
+	})
 	//   here is post method ends
 
 
 	//   here is get method starts  
+	app.get('/jwt', async (req, res) => {
+		const email = req.query.email;
+		const query = { email: email };
+		const user = await usersCollections.findOne(query);
+		if (user) {
+			const token = jwt.sign({ email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '5d' })
+			return res.send({ accessToken: token });
+		}
+		res.status(403).send({ accessToken: '' })
+	});
+
 	app.get('/categories', async (req, res) => {
 		const query = {}
 		const result = await categoriesCollections.find(query).toArray()
@@ -54,7 +81,7 @@ async function run() {
 
 	app.get('/categoriesProducts/:id', async (req, res) => {
 		const { id } = req.params
-		const query = { categoryId: id }
+		const query = { categoryName: id }
 		const result = await furnitureCollections.find(query).toArray()
 		res.send(result)
 	})
@@ -64,8 +91,11 @@ async function run() {
 		const result = await furnitureCollections.findOne(query)
 		res.send(result)
 	})
-	//   here is get method ends  
+	//   here is get method ends
 
+	//   here is put method starts
+
+	//   here is put method ends  
 }
 run().catch(err => {
 	console.log(err);
