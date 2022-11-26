@@ -130,6 +130,12 @@ async function run() {
 		const result = await usersCollections.find({}).toArray()
 		res.send(result)
 	})
+	app.get('/user/:email', verifyJWT, async (req, res) => {
+		const email = req.params.email
+		const query = { email: email }
+		const result = await usersCollections.findOne(query)
+		res.send(result)
+	})
 	app.get('/users/seller/:email', async (req, res) => {
 		const email = req.params.email;
 		const query = { email }
