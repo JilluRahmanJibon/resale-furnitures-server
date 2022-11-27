@@ -85,12 +85,11 @@ async function run() {
 		const order = req.body
 		const query = {
 			productId: order.productId,
-			buyerEmail: order.buyerEmail,
 			productImage: order.productImage
 		}
 		const alreadyOrder = await ordersCollections.findOne(query)
 		if (alreadyOrder) {
-			return res.send({ message: 'You already buy this product' })
+			return res.send({ message: 'Sorry this product is out of stock' })
 		}
 		const result = await ordersCollections.insertOne(order)
 		res.send(result)
@@ -190,17 +189,22 @@ async function run() {
 		const result = await furnitureCollections.find(query).toArray()
 		res.send(result)
 	})
-
+	app.get('/furnitures/:id', async (req, res) => {
+		const { id } = req.params
+		const query = { _id: ObjectId(id) }
+		const result = await furnitureCollections.findOne(query)
+		res.send(result)
+	})
 	app.get('/categoriesProducts/:id', async (req, res) => {
 		const { id } = req.params
 		const query = { categoryName: id }
 		const result = await furnitureCollections.find(query).toArray()
 		res.send(result)
 	})
-	app.get('/furnitures/:id', async (req, res) => {
-		const { id } = req.params
-		const query = { _id: ObjectId(id) }
-		const result = await furnitureCollections.findOne(query)
+	app.get('/orders/:email', verifyJWT, async (req, res) => {
+		const email = req.params.email
+		const query = { buyerEmail: email }
+		const result = await ordersCollections.find(query).toArray()
 		res.send(result)
 	})
 	//   here is get method ends
@@ -208,6 +212,32 @@ async function run() {
 	//   here is put method starts
 
 	//   here is put method ends  
+
+	//   here is delete method starts
+	app.delete('/users/:id', verifyJWT, verifyAdmin, async (req, res) => {
+		const { id } = req.params
+		const email = req.query.email
+		const query = { _id: ObjectId(id) }
+		const user = await usersCollections.findOne(query)
+		if (user.email === email || user.role === 'Admin' || user.email === 'jibon@gmail.com') {
+			return res.send({ message: "You Can't delete admin but Owner Can delete everything" })
+		}
+		const result = await usersCollections.deleteOne(query)
+		res.send(result)
+	})
+	app.delete('/furnitures/:id', verifyJWT, verifyAdmin, async (req, res) => {
+		const { id } = req.params
+		const query = { _id: ObjectId(id) }
+		const result = await furnitureCollections.deleteOne(query)
+		res.send(result)
+	})
+	app.delete('/orders/:id', verifyJWT, async (req, res) => {
+		const { id } = req.params
+		const query = { _id: ObjectId(id) }
+		const result = await ordersCollections.deleteOne(query)
+		res.send(result)
+	})
+	//   here is delete method ends  
 }
 run().catch(err => {
 	console.log(err);
