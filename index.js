@@ -129,11 +129,6 @@ async function run() {
 
 
 
-
-
-
-
-
 		app.post('/orders', async (req, res) => {
 			const checkSellerEmail = req.query.email
 			const order = req.body
@@ -304,14 +299,13 @@ async function run() {
 		//   here is put method starts
 		app.put('/users/:email', verifyJWT, verifyAdmin, async (req, res) => {
 			const email = req.params.email
-			const verified = req.body
 			if (email) {
 				const sellerVerified = { email: email }
 				const query = { sellerEmail: email }
 				const options = { upsert: true }
 				const updateDoc = {
 					$set: {
-						verified: verified?.verified,
+						verified: 'true',
 					}
 				}
 				const seller = await usersCollections.updateOne(sellerVerified, updateDoc, options)
