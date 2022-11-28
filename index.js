@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const app = express();
 const port = process.env.PORT || 5000;
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 // middle wares
 app.use(cors());
@@ -45,6 +46,7 @@ async function run() {
 	const usersCollections = client.db('furnitureCollection').collection('users')
 	const ordersCollections = client.db('furnitureCollection').collection('orders')
 	const reportsCollections = client.db('furnitureCollection').collection('reports')
+	const paymentsCollection = client.db('furnitureCollection').collection('payments')
 
 
 	// verify admin 
@@ -83,6 +85,55 @@ async function run() {
 	try {
 
 		//   here is post method starts
+
+		// payment option
+		app.post("/create-payment-intent", async (req, res) => {
+			const order = req.body;
+			// console.log(order);
+			const price = order.price;
+			const amount = price * 100;
+			// console.log(price);
+			const paymentIntent = await stripe.paymentIntents.create({
+				currency: "usd",
+				amount: amount,
+				payment_method_types: ["card"],
+			});
+			res.send({
+				clientSecret: paymentIntent.client_secret,
+			});
+		});
+
+
+		app.post("/payments", async (req, res) => {
+			const payment = req.body;
+			const result = await paymentsCollection.insertOne(payment);
+			const id = payment.order;
+			const filter = { _id: ObjectId(id) };
+			const updatedDoc = {
+				$set: {
+					paid: true,
+					transactionId: payment.transactionId,
+				},
+			};
+			const updatedResult = await ordersCollections.updateOne(
+				filter,
+				updatedDoc
+			);
+			res.send(result);
+		});
+
+
+
+		// payment option 
+
+
+
+
+
+
+
+
+
 		app.post('/orders', async (req, res) => {
 			const checkSellerEmail = req.query.email
 			const order = req.body
@@ -102,6 +153,10 @@ async function run() {
 			const result = await ordersCollections.insertOne(order)
 			res.send(result)
 		})
+
+
+
+
 		app.post('/furnitures', async (req, res) => {
 			const product = req.body
 			const result = await furnitureCollections.insertOne(product)
@@ -232,6 +287,12 @@ async function run() {
 			const result = await ordersCollections.find(query).toArray()
 			res.send(result)
 		})
+		app.get('/singleOrder/:id', async (req, res) => {
+			const id = req.params.id
+			const query = { _id: ObjectId(id) }
+			const result = await ordersCollections.findOne(query)
+			res.send(result)
+		})
 		app.get('/reports', verifyJWT, verifyAdmin, async (req, res) => {
 			const query = {}
 			const result = await reportsCollections.find(query).toArray()
@@ -244,7 +305,6 @@ async function run() {
 		app.put('/users/:email', verifyJWT, verifyAdmin, async (req, res) => {
 			const email = req.params.email
 			const verified = req.body
-			console.log(verified.verified);
 			if (email) {
 				const sellerVerified = { email: email }
 				const query = { sellerEmail: email }
