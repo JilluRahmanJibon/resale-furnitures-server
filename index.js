@@ -7,6 +7,9 @@ const app = express();
 const port = process.env.PORT || 5000;
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
+
+
+// author : Jillu Rahman Jibon , email: jillurahmanjibon@gmail.com
 // middle wares
 app.use(cors());
 app.use(express.json());
